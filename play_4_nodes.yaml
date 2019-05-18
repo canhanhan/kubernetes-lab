@@ -1,0 +1,80 @@
+---
+- hosts: nodes
+  gather_facts: true
+  pre_tasks:
+    - name: Create partition
+      become: true
+      parted:
+        state: present
+        device: /dev/sdb
+        number: 1
+
+    - name: Create a ext4 filesystem on /dev/sdb1
+      become: true
+      filesystem:
+        fstype: ext4
+        dev: /dev/sdb1
+
+    - name: Get UUID for partition
+      become: true
+      command: blkid -s UUID -o value /dev/sdb1
+      register: disk_blkid
+      changed_when: false
+
+    - name: Mount disk
+      become: true
+      mount:
+        name: '/mnt/{{ disk_blkid.stdout }}'
+        fstype: 'ext4'
+        src: '/dev/sdb1'
+        state: 'mounted'
+
+    - name: Create volume dirs
+      become: true
+      file:
+        state: directory
+        path: '/mnt/{{ disk_blkid.stdout }}/vol{{ item }}'
+      loop: "{{ query('sequence', 'start=1 end=' + (k8s_persistant_volume_count|string)) }}"
+
+    - name: Mount individual volumes
+      become: true
+      mount:
+        name: '/mnt/disks/{{ disk_blkid.stdout }}_vol{{ item }}'
+        fstype: ext4
+        opts: bind
+        src: '/mnt/{{ disk_blkid.stdout }}/vol{{ item }}'
+        state: 'mounted'
+      loop: "{{ query('sequence', 'start=1 end=' + (k8s_persistant_volume_count|string)) }}"
+  roles:
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-kubelet-client'
+      pki_cert_subject: 'system:node:{{ inventory_hostname_short }}'
+      pki_cert_organization_name: 'system:nodes'
+      pki_cert_ext_key_usage:
+        - clientAuth
+        - serverAuth
+      pki_cert_san:
+        - 'DNS: {{ inventory_hostname }}'
+        - 'DNS: {{ inventory_hostname_short }}'
+        - 'IP: {{ ansible_host }}'
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-kubeproxy-client'
+      pki_cert_subject: 'system:kube-proxy'
+      pki_cert_organization_name: 'system:node-proxier'
+      pki_cert_ext_key_usage:
+        - clientAuth
+
+    - role: k8s-node
+      k8s_kubelet_client_cert_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kubelet-client.crt'
+      k8s_kubelet_client_private_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kubelet-client.pem'
+      k8s_kubelet_ca_file_src: '{{ k8s_pki }}/ca.crt'
+      k8s_kubeproxy_client_cert_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kubeproxy-client.crt'
+      k8s_kubeproxy_client_private_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kubeproxy-client.pem'
+      k8s_kubeproxy_ca_file_src: '{{ k8s_pki }}/ca.crt'

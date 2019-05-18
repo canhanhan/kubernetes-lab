@@ -1,0 +1,28 @@
+---
+- name: Create configuration folder
+  become: yes
+  file:
+      path: '{{ k8s_config_path }}'
+      state: directory
+
+- name: Create library folder
+  become: yes
+  file:
+      path: '{{ k8s_library_path }}'
+      state: directory
+
+- name: 'Download binaries'
+  become: yes
+  get_url:
+    url: '{{ item }}'
+    dest: '/usr/local/bin/{{ item | basename }}'
+    mode: "+x"
+  with_items:
+    - '{{ k8s_apiserver_url }}'
+    - '{{ k8s_controller_manager_url }}'
+    - '{{ k8s_scheduler_url }}'
+    - '{{ k8s_kubectl_url }}'
+
+- import_tasks: kube-apiserver.yml
+- import_tasks: kube-controller-manager.yml
+- import_tasks: kube-scheduler.yml

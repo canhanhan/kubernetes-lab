@@ -1,0 +1,21 @@
+---
+- name: 'Download cni-plugins'
+  get_url:
+    url: '{{ k8s_cni_url }}'
+    dest: /tmp/cni-plugins-amd64-{{ k8s_cni_version }}.tgz
+
+- name: Create CNI directories
+  become: yes
+  file:
+    state: directory
+    path: '{{ item }}'
+  with_items:
+    - /etc/cni/net.d
+    - /opt/cni/bin
+
+- name: Extract cni-plugins
+  become: yes
+  unarchive:
+    src: /tmp/cni-plugins-amd64-{{ k8s_cni_version }}.tgz
+    dest: /opt/cni/bin
+    remote_src: true

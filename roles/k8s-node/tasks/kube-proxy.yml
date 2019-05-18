@@ -1,0 +1,97 @@
+---
+- name: Download kube-proxy
+  become: yes
+  get_url:
+    url: '{{ k8s_kubeproxy_url }}'
+    dest: /usr/local/bin/kube-proxy
+    mode: 0775
+
+- name: Create kube-proxy directory
+  become: yes
+  file:
+    state: directory
+    path: /var/lib/kube-proxy
+
+- name: Copy kube-proxy server certificates
+  become: yes
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: 0640
+    owner: root
+    group: root
+  with_items:
+    - { src: '{{ k8s_kubeproxy_client_cert_file_src }}', dest: '{{ k8s_kubeproxy_client_cert_file }}' }
+    - { src: '{{ k8s_kubeproxy_client_private_key_file_src }}', dest: '{{ k8s_kubeproxy_client_private_key_file }}' }
+    - { src: '{{ k8s_kubeproxy_ca_file_src }}', dest: '{{ k8s_kubeproxy_ca_file }}' }
+
+- name: Set cluster for kube-proxy
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-cluster {{ k8s_cluster_name }}
+    --certificate-authority={{ k8s_kubeproxy_ca_file }}
+    --embed-certs=true
+    --server=https://{{ k8s_controller }}:6443
+    --kubeconfig=/tmp/kube-proxy.kubeconfig
+
+- name: Set credentials for kube-proxy
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-credentials system:kube-proxy
+    --client-certificate={{ k8s_kubeproxy_client_cert_file }}
+    --client-key={{ k8s_kubeproxy_client_private_key_file }}
+    --embed-certs=true
+    --kubeconfig=/tmp/kube-proxy.kubeconfig
+
+- name: Set context for kube-proxy
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-context default
+    --cluster={{ k8s_cluster_name }}
+    --user=system:kube-proxy
+    --kubeconfig=/tmp/kube-proxy.kubeconfig
+
+- name: Use context for kube-proxy
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config use-context default
+    --kubeconfig=/tmp/kube-proxy.kubeconfig
+
+- name: Copy kubeconfig for kube-proxy
+  become: true
+  copy:
+    src: /tmp/kube-proxy.kubeconfig
+    dest: /var/lib/kube-proxy/kubeconfig
+    remote_src: true
+
+- name: Create kube-proxyConfiguration
+  become: yes
+  template:
+    src: templates/kube-proxy-config.yaml.j2
+    dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+    mode: 0644
+    owner: root
+    group: root
+
+- name: Generate systemd config
+  become: yes
+  copy:
+    src: files/kube-proxy.service
+    dest: /etc/systemd/system/kube-proxy.service
+    owner: root
+    group: root
+    mode: 0644
+  register: systemd_result
+
+- name: Reload systemd
+  when: systemd_result is changed
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start kube-proxy service
+  become: yes
+  service:
+    name: kube-proxy
+    state: started
+    enabled: yes

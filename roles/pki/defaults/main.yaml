@@ -1,0 +1,14 @@
+---
+ca_keysize: 4096
+ca_validity: 3650
+ca_subject: '/C=US/ST=IL/L=CH/O=TestEnvironment/CN=TestEnvironment Root CA'
+ca_cert: '/etc/ssl/crt/ca.crt'
+ca_privatekey: '/etc/ssl/private/ca.pem'
+
+CERT_SUBJECT: '/C=US/ST=IL/L=CH/O=TestEnvironment/CN={{ CERT_NAME }}'
+CERT_PRIVATEKEY: '/etc/ssl/private/{{ CERT_NAME }}.pem'
+CERT_CSR: '/etc/ssl/csr/{{ CERT_NAME }}.csr'
+CERT_PATH: '/etc/ssl/crt/{{ CERT_NAME }}.crt'
+CERT_KEYSIZE: 4096
+CERT_VALIDITY: 3650
+

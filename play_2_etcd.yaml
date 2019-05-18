@@ -1,0 +1,51 @@
+---
+- hosts: controllers
+  gather_facts: false
+  serial: 1
+  strategy: host_pinned
+  vars:
+    pki_path: '{{ etcd_pki }}'
+    pki_intermediateca_pass: '{{ etcd_intermediateca_password }}'
+  pre_tasks:
+    - name: Generate blank SAN list
+      set_fact:
+        etcd_server_san:
+          - 'DNS: {{ inventory_hostname }}'
+          - 'DNS: {{ inventory_hostname_short }}'
+          - 'IP: {{ ansible_host }}'
+
+    # This task is due to an etcd bug
+    # https://github.com/etcd-io/etcd/issues/9949#issuecomment-492825456
+    - name: Append IP addresses for all etcd nodes to SAN
+      set_fact:
+        etcd_server_san: '{{ etcd_server_san + ["IP: %s" | format(hostvars[item]["ansible_host"])] }}'
+      with_items: '{{ groups["controllers"] }}'
+  roles:
+    - role: pki-certificate
+      ansible_connection: local
+      pki_cert_name: '{{ inventory_hostname }}-etcd-client'
+      pki_cert_subject: '{{ inventory_hostname }}'
+      pki_cert_ext_key_usage:
+        - serverAuth
+        - clientAuth
+      pki_cert_san: '{{ etcd_server_san }}'
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_cert_name: '{{ inventory_hostname }}-etcd-peer'
+      pki_cert_subject: '{{ inventory_hostname }}'
+      pki_cert_ext_key_usage:
+        - serverAuth
+        - clientAuth
+      pki_cert_san:
+        - 'DNS: {{ inventory_hostname }}'
+        - 'DNS: {{ inventory_hostname_short }}'
+        - 'IP: {{ ansible_host }}'
+
+    - role: etcd
+      etcd_cert_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-etcd-client.crt'
+      etcd_key_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-etcd-client.pem'
+      etcd_peer_cert_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-etcd-peer.crt'
+      etcd_peer_key_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-etcd-peer.pem'
+      etcd_trusted_ca_file_src: '{{ etcd_pki }}/ca.crt'
+      etcd_peer_trusted_ca_file_src: '{{ etcd_pki }}/ca.crt'

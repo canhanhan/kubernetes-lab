@@ -1,0 +1,4 @@
+classes:
+- name: local-storage
+  hostDir: /mnt/disks
+  storageClass: true

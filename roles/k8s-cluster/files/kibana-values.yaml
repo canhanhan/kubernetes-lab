@@ -1,0 +1,6 @@
+service:
+  type: LoadBalancer
+  externalPort: 80
+
+env:
+  ELASTICSEARCH_HOSTS: http://elasticsearch-client.default.svc.cluster.local:9200

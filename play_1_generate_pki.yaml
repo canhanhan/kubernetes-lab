@@ -1,0 +1,14 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: pki
+      pki_path: '{{ etcd_pki }}'
+      pki_rootca_pass: '{{ etcd_rootca_password }}'
+      pki_intermediateca_pass: '{{ etcd_intermediateca_password }}'
+
+    - role: pki
+      pki_path: '{{ k8s_pki }}'
+      pki_rootca_pass: '{{ k8s_rootca_password }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'

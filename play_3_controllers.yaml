@@ -1,0 +1,94 @@
+---
+- hosts: controllers
+  gather_facts: false
+  pre_tasks:
+    - name: Generate blank etcd server list
+      set_fact:
+        etcd_servers: []
+
+    - name: Append IP addresses for all etcd nodes
+      set_fact:
+        etcd_servers: '{{ etcd_servers + ["https://%s:2379" | format(hostvars[item]["ansible_host"])] }}'
+      with_items: '{{ groups["controllers"] }}'
+  roles:
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ etcd_pki }}'
+      pki_intermediateca_pass: '{{ etcd_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-etcd-client'
+      pki_cert_subject: '{{ inventory_hostname }}'
+      pki_cert_ext_key_usage:
+        - clientAuth
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: 'k8s-serviceaccount'
+      pki_cert_subject: '{{ inventory_hostname }}'
+      pki_cert_ext_key_usage:
+        - clientAuth
+      pki_cert_san:
+        - 'DNS: {{ inventory_hostname }}'
+        - 'DNS: {{ inventory_hostname_short }}'
+        - 'IP: {{ ansible_host }}'
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-tls'
+      pki_cert_subject: '{{ inventory_hostname }}'
+      pki_cert_organization_name: 'system:masters'
+      pki_cert_ext_key_usage:
+        - clientAuth
+        - serverAuth
+      pki_cert_san:
+        - 'DNS: {{ inventory_hostname }}'
+        - 'DNS: {{ inventory_hostname_short }}'
+        - 'DNS: kubernetes.default.svc'
+        - 'IP: {{ ansible_host }}'
+        - 'IP: 127.0.0.1'
+        - 'IP: {{ k8s_service_cluster_ip_range | ipaddr("1") | ipaddr("address") }}'
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-kube-controller-manager-client'
+      pki_cert_subject: 'system:kube-controller-manager'
+      pki_cert_organization_name: 'system:kube-controller-manager'
+      pki_cert_ext_key_usage:
+        - clientAuth
+
+    - role: pki-certificate
+      ansible_connection: local
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: '{{ inventory_hostname }}-k8s-kube-scheduler-client'
+      pki_cert_subject: 'system:kube-scheduler'
+      pki_cert_organization_name: 'system:kube-scheduler'
+      pki_cert_ext_key_usage:
+        - clientAuth
+
+    - role: k8s-controller
+      k8s_apiserver_count: '{{ groups["controllers"] | length }}'
+      k8s_etcd_servers: '{{ etcd_servers }}'
+      k8s_client_ca_file_src: '{{ k8s_pki }}/ca.crt'
+      k8s_etcd_ca_file_src: '{{ etcd_pki }}/ca.crt'
+      k8s_etcd_cert_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-k8s-etcd-client.crt'
+      k8s_etcd_cert_key_file_src: '{{ etcd_pki }}/{{ inventory_hostname }}-k8s-etcd-client.pem'
+      k8s_kubelet_ca_file_src: '{{ k8s_pki }}/ca.crt'
+      k8s_kubelet_client_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-tls.crt'
+      k8s_kubelet_client_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-tls.pem'
+      k8s_service_account_key_file_src: '{{ k8s_pki }}/k8s-serviceaccount.crt'
+      k8s_service_account_private_key_file_src: '{{ k8s_pki }}/k8s-serviceaccount.pem'
+      k8s_tls_cert_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-tls.crt'
+      k8s_tls_private_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-tls.pem'
+      k8s_kube_controller_manager_client_cert_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kube-controller-manager-client.crt'
+      k8s_kube_controller_manager_client_private_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kube-controller-manager-client.pem'
+      k8s_kube_scheduler_client_cert_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kube-scheduler-client.crt'
+      k8s_kube_scheduler_client_private_key_file_src: '{{ k8s_pki }}/{{ inventory_hostname }}-k8s-kube-scheduler-client.pem'
+      k8s_cluster_signing_cert_file_src: '{{ k8s_pki }}/k8s.crt'
+      k8s_cluster_signing_key_file_src: '{{ k8s_pki }}/k8s.pem'
+      k8s_root_ca_file_src: '{{ k8s_pki }}/ca.crt'

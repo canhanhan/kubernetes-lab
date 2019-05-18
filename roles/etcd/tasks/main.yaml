@@ -1,0 +1,74 @@
+---
+- name: Download etcd installation
+  get_url:
+    url: 'https://github.com/etcd-io/etcd/releases/download/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz'
+    dest: '/tmp/etcd.tar.gz'
+
+- name: Extract etcd installation
+  unarchive:
+    src: /tmp/etcd.tar.gz
+    dest: /tmp/
+    creates: '/tmp/etcd-{{ etcd_version }}-linux-amd64'
+    remote_src: true
+
+- name: Copy etcd binaries
+  become: yes
+  copy:
+    src: '/tmp/etcd-{{ etcd_version }}-linux-amd64/{{ item }}'
+    dest: '/usr/local/bin/{{ item }}'
+    mode: 0755
+    owner: root
+    group: root
+    remote_src: true
+  with_items:
+    - etcd
+    - etcdctl
+
+- name: Create etcd directories
+  become: yes
+  file:
+    path: '{{ item }}'
+    state: directory
+  with_items:
+    - '{{ etcd_cfg_dir }}'
+    - '{{ etcd_data_dir }}'
+
+- name: Copy etcd certificates
+  become: yes
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: 0640
+    owner: root
+    group: root
+  with_items:
+    - { src: '{{ etcd_cert_file_src }}', dest: '{{ etcd_cert_file }}' }
+    - { src: '{{ etcd_key_file_src }}', dest: '{{ etcd_key_file }}' }
+    - { src: '{{ etcd_peer_cert_file_src }}', dest: '{{ etcd_peer_cert_file }}' }
+    - { src: '{{ etcd_peer_key_file_src }}', dest: '{{ etcd_peer_key_file }}' }
+    - { src: '{{ etcd_trusted_ca_file_src }}', dest: '{{ etcd_trusted_ca_file }}' }
+    - { src: '{{ etcd_peer_trusted_ca_file_src }}', dest: '{{ etcd_peer_trusted_ca_file }}' }
+  register: cert_result
+
+- name: Generate systemd config
+  become: yes
+  template:
+    src: templates/etcd.service.j2
+    dest: /etc/systemd/system/etcd.service
+    owner: root
+    group: root
+    mode: 0644
+  register: systemd_result
+
+- name: Reload systemd
+  when: systemd_result is changed
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start etcd
+  become: yes
+  service:
+    name: etcd
+    enabled: yes
+    state: '{{ "restarted" if (systemd_result is changed) or (cert_result is changed) else "started" }}'

@@ -1,0 +1,14 @@
+---
+etcd_version: v3.3.13
+etcd_client_port: 2379
+etcd_peer_port: 2380
+
+etcd_data_dir: /var/lib/etcd
+etcd_cfg_dir: /etc/etcd
+
+etcd_cert_file: '{{ etcd_cfg_dir }}/{{ etcd_cert_file_src | basename }}'
+etcd_key_file: '{{ etcd_cfg_dir }}/{{ etcd_key_file_src | basename }}'
+etcd_peer_cert_file: '{{ etcd_cfg_dir }}/{{ etcd_peer_cert_file_src | basename }}'
+etcd_peer_key_file: '{{ etcd_cfg_dir }}/{{ etcd_peer_key_file_src | basename }}'
+etcd_trusted_ca_file: '{{ etcd_cfg_dir }}/{{ etcd_trusted_ca_file_src | basename }}'
+etcd_peer_trusted_ca_file: '{{ etcd_cfg_dir }}/{{ etcd_peer_trusted_ca_file_src | basename }}'

@@ -1,0 +1,40 @@
+cluster:
+  vars:
+    ansible_ssh_port: 22
+    ansible_ssh_user: vagrant
+    ansible_ssh_private_key_file: '{{ playbook_dir }}/.vagrant/machines/{{ inventory_hostname }}/virtualbox/private_key'
+
+    k8s_cluster_name: testy
+    k8s_version: 'v1.14.2'
+    k8s_service_cluster_ip_range: 10.43.0.0/16
+    k8s_controller: 192.168.55.2
+    k8s_pod_cidr: 10.200.0.0/16
+    k8s_load_balancer_range:
+      - 192.168.55.200-192.168.55.250
+    k8s_persistant_volume_count: 10
+    k8s_encryption_key: '{{ lookup("password", ".ansible/k8s/encryption_key length=32") }}'
+
+    k8s_pki: '.ansible/k8s'
+    k8s_rootca_password: '{{ lookup("password", ".ansible/k8s_rootca_password") }}'
+    k8s_intermediateca_password: '{{ lookup("password", ".ansible/k8s_intermeditateca_password") }}'
+
+    etcd_pki: '.ansible/etcd'
+    etcd_rootca_password: '{{ lookup("password", ".ansible/etcd_rootca_password") }}'
+    etcd_intermediateca_password: '{{ lookup("password", ".ansible/etcd_intermediateca_password") }}'
+  children:
+    controllers:
+      hosts:
+        controller1:
+          ansible_host: 192.168.55.2
+        controller2:
+          ansible_host: 192.168.55.3
+    nodes:
+      hosts:
+        node1:
+          ansible_host: 192.168.55.11
+        node2:
+          ansible_host: 192.168.55.12
+        node3:
+          ansible_host: 192.168.55.13
+  hosts:
+    localhost:

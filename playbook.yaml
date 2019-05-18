@@ -1,0 +1,6 @@
+---
+- import_playbook: play_1_generate_pki.yaml
+- import_playbook: play_2_etcd.yaml
+- import_playbook: play_3_controllers.yaml
+- import_playbook: play_4_nodes.yaml
+- import_playbook: play_5_cluster.yaml

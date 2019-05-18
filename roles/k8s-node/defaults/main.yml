@@ -1,0 +1,14 @@
+---
+k8s_cni_version: 'v0.7.5'
+k8s_cni_url: 'https://github.com/containernetworking/plugins/releases/download/{{ k8s_cni_version }}/cni-plugins-amd64-{{ k8s_cni_version }}.tgz'
+
+k8s_kubeproxy_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kube-proxy'
+k8s_kubelet_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kubelet'
+
+k8s_kubelet_ca_file: '/var/lib/kubelet/{{ k8s_kubelet_ca_file_src | basename }}'
+k8s_kubelet_client_cert_file: '/var/lib/kubelet/{{ k8s_kubelet_client_cert_file_src | basename }}'
+k8s_kubelet_client_private_key_file: '/var/lib/kubelet/{{ k8s_kubelet_client_private_key_file_src | basename }}'
+
+k8s_kubeproxy_ca_file: '/var/lib/kubelet/{{ k8s_kubeproxy_ca_file_src | basename }}'
+k8s_kubeproxy_client_cert_file: '/var/lib/kubelet/{{ k8s_kubeproxy_client_cert_file_src | basename }}'
+k8s_kubeproxy_client_private_key_file: '/var/lib/kubelet/{{ k8s_kubeproxy_client_private_key_file_src | basename }}'

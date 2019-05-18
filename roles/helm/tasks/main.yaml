@@ -1,0 +1,17 @@
+---
+- name: Check if chart installed
+  when: helm_name|length > 0
+  command: 'helm list -q "^{{ helm_name }}$"'
+  changed_when: false
+  register: helm_result
+
+- name: Install chart
+  when: helm_name|length == 0 or helm_result.stdout|length == 0
+  command: >-
+    helm install --wait
+    {% if helm_name|length > 0 %}--name "{{ helm_name }}"{% endif %}
+    {% if helm_values_file|length > 0 %}--values {{ helm_values_file }}{% endif %}
+    {% if helm_repo|length > 0 %}--repo {{ helm_repo }}{% endif %}
+    {{ helm_chart }}
+  register: helm_result
+  changed_when: helm_result.stdout|length > 0

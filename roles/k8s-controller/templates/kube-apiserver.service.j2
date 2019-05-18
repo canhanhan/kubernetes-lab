@@ -1,0 +1,40 @@
+[Unit]
+Description=Kubernetes API Server
+Documentation=https://github.com/kubernetes/kubernetes
+
+[Service]
+ExecStart={{ k8s_kube_apiserver }} \
+  --advertise-address={{ ansible_host }} \
+  --allow-privileged=true \
+  --apiserver-count={{ k8s_apiserver_count }} \
+  --audit-log-maxage=30 \
+  --audit-log-maxbackup=3 \
+  --audit-log-maxsize=100 \
+  --audit-log-path=/var/log/audit.log \
+  --authorization-mode=Node,RBAC \
+  --bind-address=0.0.0.0 \
+  --client-ca-file={{ k8s_client_ca_file }} \
+  --enable-admission-plugins=NamespaceLifecycle,NodeRestriction,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota \
+  --enable-swagger-ui=true \
+  --etcd-cafile={{ k8s_etcd_ca_file }} \
+  --etcd-certfile={{ k8s_etcd_cert_file }} \
+  --etcd-keyfile={{ k8s_etcd_cert_key_file }} \
+  --etcd-servers={{ k8s_etcd_servers | join(",") }} \
+  --event-ttl=1h \
+  --encryption-provider-config=/var/lib/kubernetes/encryption-config.yaml \
+  --kubelet-certificate-authority={{ k8s_kubelet_ca_file }} \
+  --kubelet-client-certificate={{ k8s_tls_cert_file }} \
+  --kubelet-client-key={{ k8s_tls_private_key_file }} \
+  --kubelet-https=true \
+  --runtime-config=api/all \
+  --service-account-key-file={{ k8s_service_account_key_file }} \
+  --service-cluster-ip-range={{ k8s_service_cluster_ip_range }} \
+  --service-node-port-range=30000-32767 \
+  --tls-cert-file={{ k8s_tls_cert_file }} \
+  --tls-private-key-file={{ k8s_tls_private_key_file }} \
+  --v=2
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

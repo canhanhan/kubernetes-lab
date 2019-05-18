@@ -1,0 +1,54 @@
+---
+- name: Copy api server certificates
+  become: yes
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: 0640
+    owner: root
+    group: root
+  with_items:
+    - { src: '{{ k8s_client_ca_file_src }}', dest: '{{ k8s_client_ca_file }}' }
+    - { src: '{{ k8s_etcd_ca_file_src }}', dest: '{{ k8s_etcd_ca_file }}' }
+    - { src: '{{ k8s_etcd_cert_file_src }}', dest: '{{ k8s_etcd_cert_file }}' }
+    - { src: '{{ k8s_etcd_cert_key_file_src }}', dest: '{{ k8s_etcd_cert_key_file }}' }
+    - { src: '{{ k8s_kubelet_ca_file_src }}', dest: '{{ k8s_kubelet_ca_file }}' }
+    - { src: '{{ k8s_kubelet_client_file_src }}', dest: '{{ k8s_kubelet_client_file }}' }
+    - { src: '{{ k8s_kubelet_client_key_file_src }}', dest: '{{ k8s_kubelet_client_key_file }}' }
+    - { src: '{{ k8s_service_account_key_file_src }}', dest: '{{ k8s_service_account_key_file }}' }
+    - { src: '{{ k8s_service_account_private_key_file_src }}', dest: '{{ k8s_service_account_private_key_file }}' }
+    - { src: '{{ k8s_tls_cert_file_src }}', dest: '{{ k8s_tls_cert_file }}' }
+    - { src: '{{ k8s_tls_private_key_file_src }}', dest: '{{ k8s_tls_private_key_file }}' }
+  register: cert_result
+
+- name: Generate encryption config
+  become: yes
+  template:
+    src: templates/encryption-config.yaml.j2
+    dest: '/var/lib/kubernetes/encryption-config.yaml'
+    mode: 0640
+    owner: root
+    group: root
+
+- name: Generate systemd config
+  become: yes
+  template:
+    src: templates/kube-apiserver.service.j2
+    dest: /etc/systemd/system/kube-apiserver.service
+    owner: root
+    group: root
+    mode: 0644
+  register: systemd_result
+
+- name: Reload systemd
+  when: systemd_result is changed
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start kube-apiserver
+  become: yes
+  service:
+    name: kube-apiserver
+    enabled: yes
+    state: '{{ "restarted" if (systemd_result is changed) or (cert_result is changed) else "started" }}'

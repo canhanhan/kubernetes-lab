@@ -1,0 +1,18 @@
+kind: KubeletConfiguration
+apiVersion: kubelet.config.k8s.io/v1beta1
+authentication:
+  anonymous:
+    enabled: false
+  webhook:
+    enabled: true
+  x509:
+    clientCAFile: "{{ k8s_kubelet_ca_file }}"
+authorization:
+  mode: Webhook
+clusterDomain: "cluster.local"
+clusterDNS:
+  - "10.43.0.10"
+resolvConf: "/etc/resolv.conf"
+runtimeRequestTimeout: "15m"
+tlsCertFile: "{{ k8s_kubelet_client_cert_file }}"
+tlsPrivateKeyFile: "{{ k8s_kubelet_client_private_key_file }}"

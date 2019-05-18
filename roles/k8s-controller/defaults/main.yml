@@ -1,0 +1,35 @@
+---
+k8s_apiserver_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kube-apiserver'
+k8s_controller_manager_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kube-controller-manager'
+k8s_scheduler_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kube-scheduler'
+k8s_kubectl_url: 'https://storage.googleapis.com/kubernetes-release/release/{{ k8s_version }}/bin/linux/amd64/kubectl'
+
+k8s_config_path: '/etc/kubernetes/config'
+k8s_library_path: '/var/lib/kubernetes'
+
+k8s_kube_apiserver: '/usr/local/bin/kube-apiserver'
+
+k8s_client_ca_file: '{{ k8s_library_path }}/{{ k8s_client_ca_file_src | basename }}'
+
+k8s_kubelet_ca_file: '{{ k8s_library_path }}/{{ k8s_kubelet_ca_file_src | basename }}'
+k8s_kubelet_client_file: '{{ k8s_library_path }}/{{ k8s_kubelet_client_file_src | basename }}'
+k8s_kubelet_client_key_file: '{{ k8s_library_path }}/{{ k8s_kubelet_client_key_file_src | basename }}'
+
+k8s_etcd_ca_file: '{{ k8s_library_path }}/etcd_{{ k8s_etcd_ca_file_src | basename }}'
+k8s_etcd_cert_file: '{{ k8s_library_path }}/{{ k8s_etcd_cert_file_src | basename }}'
+k8s_etcd_cert_key_file: '{{ k8s_library_path }}/{{ k8s_etcd_cert_key_file_src | basename }}'
+
+k8s_service_account_key_file: '{{ k8s_library_path }}/{{ k8s_service_account_key_file_src | basename }}'
+k8s_service_account_private_key_file: '{{ k8s_library_path }}/{{ k8s_service_account_private_key_file_src | basename }}'
+
+k8s_tls_cert_file: '{{ k8s_library_path }}/{{ k8s_tls_cert_file_src | basename }}'
+k8s_tls_private_key_file: '{{ k8s_library_path }}/{{ k8s_tls_private_key_file_src | basename }}'
+
+k8s_kube_controller_manager_client_cert_file: '{{ k8s_library_path }}/{{ k8s_kube_controller_manager_client_cert_file_src | basename }}'
+k8s_kube_controller_manager_client_private_key_file: '{{ k8s_library_path }}/{{ k8s_kube_controller_manager_client_private_key_file_src | basename }}'
+k8s_kube_scheduler_client_cert_file: '{{ k8s_library_path }}/{{ k8s_kube_scheduler_client_cert_file_src | basename }}'
+k8s_kube_scheduler_client_private_key_file: '{{ k8s_library_path }}/{{ k8s_kube_scheduler_client_private_key_file_src | basename }}'
+
+k8s_cluster_signing_cert_file: '{{ k8s_library_path }}/{{ k8s_cluster_signing_cert_file_src | basename }}'
+k8s_cluster_signing_key_file: '{{ k8s_library_path }}/{{ k8s_cluster_signing_key_file_src | basename }}'
+k8s_root_ca_file: '{{ k8s_library_path }}/{{ k8s_root_ca_file_src | basename }}'

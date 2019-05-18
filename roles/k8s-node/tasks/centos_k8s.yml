@@ -1,0 +1,43 @@
+---
+- name: Remove swapfile from /etc/fstab
+  become: yes
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+
+- name: Disable swap
+  when: ansible_swaptotal_mb > 0
+  become: yes
+  command: swapoff -a
+
+- name: Install Kubernetes dependencies
+  become: yes
+  package:
+    name:
+      - socat
+      - conntrack
+      - ipset
+    state: latest
+
+- name: enable required kernel modules on boot
+  lineinfile:
+    line: "br_netfilter"
+    path: /etc/modules-load.d/kubernetes.conf
+    create: true
+  become: true
+
+- name: enable required kernel modules
+  modprobe:
+    name: br_netfilter
+    state: present
+  become: true
+
+- name: update kernel settings
+  become: yes
+  sysctl:
+    name: net.bridge.bridge-nf-call-iptables
+    value: 1
+    sysctl_set: yes
+    state: present
+    reload: yes

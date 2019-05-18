@@ -1,0 +1,5 @@
+replicaCount: 1
+serviceAccount:
+  create: true
+service:
+  clusterIP: '{{ k8s_service_cluster_ip_range | ipaddr("10") | ipaddr("address") }}'

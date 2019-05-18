@@ -1,0 +1,162 @@
+---
+- name: Create directories
+  file:
+    path: '{{ pki_path }}'
+    state: directory
+
+- name: Generate root CA private key
+  openssl_privatekey:
+    path: '{{ pki_path }}/root.pem'
+    passphrase: '{{ pki_rootca_pass }}'
+    cipher: aes256
+    size: 2048
+
+- name: Generate root CA CSR
+  openssl_csr:
+    path: '{{ pki_path }}/root.csr'
+    privatekey_path: '{{ pki_path }}/root.pem'
+    privatekey_passphrase: '{{ pki_rootca_pass }}'
+    common_name: Lab Root CA
+    country_name: US
+    organization_name: Lab
+    organizational_unit_name: Lab
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:0
+    basic_constraints_critical: true
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+    key_usage_critical: true
+
+- name: Generate root CA certificate
+  openssl_certificate:
+    path: '{{ pki_path }}/root.crt'
+    csr_path: '{{ pki_path }}/root.csr'
+    key_usage:
+      - keyCertSign
+    key_usage_strict: true
+    privatekey_path: '{{ pki_path }}/root.pem'
+    privatekey_passphrase: '{{ pki_rootca_pass }}'
+    provider: selfsigned
+
+- name: Generate intermediate CA private key
+  openssl_privatekey:
+    path: '{{ pki_path }}/intermediate.pem'
+    passphrase: '{{ pki_intermediateca_pass }}'
+    cipher: aes256
+    size: 2048
+
+- name: Generate intermediate CA CSR
+  openssl_csr:
+    path: '{{ pki_path }}/intermediate.csr'
+    privatekey_path: '{{ pki_path }}/intermediate.pem'
+    privatekey_passphrase: '{{ pki_intermediateca_pass }}'
+    common_name: Lab Intermediate CA
+    country_name: US
+    organization_name: Lab
+    organizational_unit_name: Lab
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:1
+    basic_constraints_critical: true
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+    key_usage_critical: true
+
+- name: Generate intermediate CA certificate
+  openssl_certificate:
+    path: '{{ pki_path }}/intermediate.crt'
+    csr_path: '{{ pki_path }}/intermediate.csr'
+    key_usage:
+      - keyCertSign
+    key_usage_strict: true
+    ownca_path: '{{ pki_path }}/root.crt'
+    ownca_privatekey_path: '{{ pki_path }}/root.pem'
+    ownca_privatekey_passphrase: '{{ pki_rootca_pass }}'
+    provider: ownca
+
+- name: Generate intermediate CA private key
+  openssl_privatekey:
+    path: '{{ pki_path }}/intermediate.pem'
+    passphrase: '{{ pki_intermediateca_pass }}'
+    cipher: aes256
+    size: 2048
+
+- name: Generate intermediate CA CSR
+  openssl_csr:
+    path: '{{ pki_path }}/intermediate.csr'
+    privatekey_path: '{{ pki_path }}/intermediate.pem'
+    privatekey_passphrase: '{{ pki_intermediateca_pass }}'
+    common_name: Lab Intermediate CA
+    country_name: US
+    organization_name: Lab
+    organizational_unit_name: Lab
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:1
+    basic_constraints_critical: true
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+    key_usage_critical: true
+
+- name: Generate intermediate CA certificate
+  openssl_certificate:
+    path: '{{ pki_path }}/intermediate.crt'
+    csr_path: '{{ pki_path }}/intermediate.csr'
+    key_usage:
+      - keyCertSign
+    key_usage_strict: true
+    ownca_path: '{{ pki_path }}/root.crt'
+    ownca_privatekey_path: '{{ pki_path }}/root.pem'
+    ownca_privatekey_passphrase: '{{ pki_rootca_pass }}'
+    provider: ownca
+
+- name: Generate k8s CA private key
+  openssl_privatekey:
+    path: '{{ pki_path }}/k8s.pem'
+    passphrase: '{{ pki_intermediateca_pass }}'
+    cipher: aes256
+    size: 2048
+
+- name: Generate k8s CA CSR
+  openssl_csr:
+    path: '{{ pki_path }}/k8s.csr'
+    privatekey_path: '{{ pki_path }}/k8s.pem'
+    privatekey_passphrase: '{{ pki_intermediateca_pass }}'
+    common_name: Lab K8S CA
+    country_name: US
+    organization_name: Lab
+    organizational_unit_name: Lab
+    basic_constraints:
+      - CA:TRUE
+      - pathlen:2
+    basic_constraints_critical: true
+    key_usage:
+      - cRLSign
+      - digitalSignature
+      - keyCertSign
+    key_usage_critical: true
+
+- name: Generate K8S CA certificate
+  openssl_certificate:
+    path: '{{ pki_path }}/k8s.crt'
+    csr_path: '{{ pki_path }}/k8s.csr'
+    key_usage:
+      - keyCertSign
+    key_usage_strict: true
+    ownca_path: '{{ pki_path }}/intermediate.crt'
+    ownca_privatekey_path: '{{ pki_path }}/intermediate.pem'
+    ownca_privatekey_passphrase: '{{ pki_intermediateca_pass }}'
+    provider: ownca
+
+- name: Generate CA cert
+  assemble:
+    src: '{{ pki_path }}'
+    regexp: '^(root|intermediate).crt$'
+    dest: '{{ pki_path }}/ca.crt'

@@ -1,0 +1,19 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: pki-certificate
+      pki_path: '{{ k8s_pki }}'
+      pki_intermediateca_pass: '{{ k8s_intermediateca_password }}'
+      pki_cert_name: 'k8s-admin'
+      pki_cert_subject: 'admin'
+      pki_cert_organization_name: 'system:masters'
+      pki_cert_ext_key_usage:
+        - clientAuth
+
+    - role: k8s-cluster
+      tags: test
+      k8s_admin_client_cert_file_src: '{{ k8s_pki }}/k8s-admin.crt'
+      k8s_admin_client_private_key_file_src: '{{ k8s_pki }}/k8s-admin.pem'
+      k8s_admin_ca_file_src: '{{ k8s_pki }}/ca.crt'

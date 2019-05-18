@@ -1,0 +1,13 @@
+---
+- name: Download kubectl
+  become: yes
+  get_url:
+    url: https://storage.googleapis.com/kubernetes-release/release/v1.14.0/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: 0775
+
+- import_tasks: docker.yml
+- import_tasks: cni.yml
+- import_tasks: centos_k8s.yml
+- import_tasks: kubelet.yml
+- import_tasks: kube-proxy.yml

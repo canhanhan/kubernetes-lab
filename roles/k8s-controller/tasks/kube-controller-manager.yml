@@ -1,0 +1,78 @@
+---
+- name: Copy kube-controler-manager server certificates
+  become: yes
+  copy:
+    src: '{{ item.src }}'
+    dest: '{{ item.dest }}'
+    mode: 0640
+    owner: root
+    group: root
+  with_items:
+    - { src: '{{ k8s_cluster_signing_cert_file_src }}', dest: '{{ k8s_cluster_signing_cert_file }}' }
+    - { src: '{{ k8s_cluster_signing_key_file_src }}', dest: '{{ k8s_cluster_signing_key_file }}' }
+    - { src: '{{ k8s_kube_controller_manager_client_cert_file_src }}', dest: '{{ k8s_kube_controller_manager_client_cert_file }}' }
+    - { src: '{{ k8s_kube_controller_manager_client_private_key_file_src }}', dest: '{{ k8s_kube_controller_manager_client_private_key_file }}' }
+    - { src: '{{ k8s_root_ca_file_src }}', dest: '{{ k8s_root_ca_file }}' }
+  register: cert_result
+
+- name: Set cluster for kube-controller-manager
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-cluster {{ k8s_cluster_name }}
+    --certificate-authority={{ k8s_client_ca_file }}
+    --embed-certs=true
+    --server=https://127.0.0.1:6443
+    --kubeconfig=/tmp/kube-controller-manager.kubeconfig
+
+- name: Set credentials for kube-controller-manager
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-credentials system:kube-controller-manager
+    --client-certificate={{ k8s_kube_controller_manager_client_cert_file }}
+    --client-key={{ k8s_kube_controller_manager_client_private_key_file }}
+    --embed-certs=true
+    --kubeconfig=/tmp/kube-controller-manager.kubeconfig
+
+- name: Set context for kube-controller-manager
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config set-context default
+    --cluster={{ k8s_cluster_name }}
+    --user=system:kube-controller-manager
+    --kubeconfig=/tmp/kube-controller-manager.kubeconfig
+
+- name: Use context for kube-controller-manager
+  become: yes
+  command: >-
+    /usr/local/bin/kubectl config use-context default
+    --kubeconfig=/tmp/kube-controller-manager.kubeconfig
+
+- name: Copy kubeconfig for kube-controller-manager
+  become: true
+  copy:
+    src: /tmp/kube-controller-manager.kubeconfig
+    dest: '{{ k8s_library_path }}/kube-controller-manager.kubeconfig'
+    remote_src: true
+
+- name: Generate systemd config
+  become: yes
+  template:
+    src: templates/kube-controller-manager.service.j2
+    dest: /etc/systemd/system/kube-controller-manager.service
+    owner: root
+    group: root
+    mode: 0644
+  register: systemd_result
+
+- name: Reload systemd
+  when: systemd_result is changed
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start kube-controller-manager
+  become: yes
+  service:
+    name: kube-controller-manager
+    enabled: yes
+    state: '{{ "restarted" if (systemd_result is changed) or (cert_result is changed) else "started" }}'
