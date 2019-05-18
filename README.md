@@ -15,12 +15,14 @@ A learning project to build Kubernetes cluster the hard way without kubeadm or o
 
 ## Requirements
 - [Vagrant](https://github.com/hashicorp/vagrant)
+- [vagrant-vbguest](https://github.com/dotless-de/vagrant-vbguest)
 - [Ansible (2.7.8 +)](https://github.com/ansible/ansible)
 - [netaddr Python module](https://github.com/drkjam/netaddr)
 
 ## Usage
 ```
-sudo -H pip install netaddr ansible
+pip install netaddr ansible
+vagrant plugin install vagrant-vbguest
 vagrant up
 ansible-playbook -i inventory.yml playbook.yml
 ```
