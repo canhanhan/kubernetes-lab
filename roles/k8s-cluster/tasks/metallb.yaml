@@ -1,0 +1,11 @@
+---
+- name: Apply MetalLB
+  command: kubectl apply -f {{ role_path }}/files/metallb-install.yaml
+
+- name: Generate MetalLB config
+  template:
+    src: templates/metallb-config.yaml.j2
+    dest: .ansible/metallb-config.yaml
+
+- name: Apply MetalLB Config
+  command: kubectl apply -f .ansible/metallb-config.yaml

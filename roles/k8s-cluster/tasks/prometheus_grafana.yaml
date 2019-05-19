@@ -1,0 +1,24 @@
+---
+- name: Install Prometheus
+  include_role:
+    name: helm
+  vars:
+    helm_name: prometheus
+    helm_chart: prometheus
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '{{ role_dir }}/files/prometheus-values.yaml'
+
+- name: Generate Grafana secret
+  command: "kubectl create secret generic grafana-secret --from-literal='username=admin' --from-literal='password=admin'"
+  register: grafana_result
+  failed_when: grafana_result.rc != 0 and "already exists" not in grafana_result.stderr
+  changed_when: '"already exists" not in grafana_result.stderr'
+
+- name: Install Grafana
+  include_role:
+    name: helm
+  vars:
+    helm_name: grafana
+    helm_chart: grafana
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '{{ role_dir }}/files/grafana-values.yaml'

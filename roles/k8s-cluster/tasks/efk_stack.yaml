@@ -1,0 +1,26 @@
+---
+- name: Install Fluentd-elasticsearch
+  include_role:
+    name: helm
+  vars:
+    helm_name: fluentd-elasticsearch
+    helm_chart: fluentd-elasticsearch
+    helm_repo: https://kiwigrid.github.io
+
+- name: Install ElasticSearch
+  include_role:
+    name: helm
+  vars:
+    helm_name: elasticsearch
+    helm_chart: elasticsearch
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '{{ role_dir }}/files/elasticsearch-values.yaml'
+
+- name: Install Kibana
+  include_role:
+    name: helm
+  vars:
+    helm_name: kibana
+    helm_chart: kibana
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '{{ role_dir }}/files/kibana-values.yaml'

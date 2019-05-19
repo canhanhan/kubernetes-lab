@@ -1,0 +1,23 @@
+---
+- name: Set cluster
+  command: >-
+    kubectl config set-cluster {{ k8s_cluster_name }}
+    --certificate-authority={{ k8s_admin_ca_file_src }}
+    --embed-certs=true
+    --server=https://{{ k8s_controller }}:6443
+
+- name: Set credentials
+  command: >-
+    kubectl config set-credentials admin-user
+    --client-certificate={{ k8s_admin_client_cert_file_src }}
+    --client-key={{ k8s_admin_client_private_key_file_src }}
+    --embed-certs=true
+
+- name: Set context
+  command: >-
+    kubectl config set-context default
+    --cluster={{ k8s_cluster_name }}
+    --user=admin-user
+
+- name: Use context
+  command: kubectl config use-context default

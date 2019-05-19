@@ -1,0 +1,14 @@
+---
+- name: Generate CoreDNS values
+  template:
+    src: templates/coredns-values.yaml.j2
+    dest: .ansible/coredns-values.yaml
+
+- name: Install CoreDNS
+  include_role:
+    name: helm
+  vars:
+    helm_name: coredns
+    helm_chart: coredns
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '.ansible/coredns-values.yaml'

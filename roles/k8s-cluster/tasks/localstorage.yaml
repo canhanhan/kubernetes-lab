@@ -1,0 +1,16 @@
+---
+- name: Install localvolume
+  include_role:
+    name: helm
+  vars:
+    helm_name: localvolume
+    helm_chart: '{{ role_dir }}/files/localvolume'
+    helm_values_file: '{{ role_dir }}/files/localvolume-values.yaml'
+
+- name: Make local-storage default
+  command: "kubectl patch storageclass local-storage -p '{{ data | to_json }}'"
+  vars:
+    data:
+      metadata:
+        annotations:
+          storageclass.kubernetes.io/is-default-class: "true"

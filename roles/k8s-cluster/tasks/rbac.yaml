@@ -1,0 +1,3 @@
+---
+- name: Apply Admin RBAC Config
+  command: kubectl apply -f {{ role_path }}/files/admin.yaml

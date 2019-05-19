@@ -1,0 +1,9 @@
+---
+- name: Install Nginx Ingress
+  include_role:
+    name: helm
+  vars:
+    helm_name: nginx
+    helm_chart: nginx-ingress
+    helm_repo: https://kubernetes-charts.storage.googleapis.com
+    helm_values_file: '{{ role_dir }}/files/nginx-values.yaml'

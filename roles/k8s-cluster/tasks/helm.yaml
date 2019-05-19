@@ -1,0 +1,8 @@
+---
+- name: Apply Tiller RBAC Config
+  command: kubectl apply -f {{ role_path }}/files/tiller-rbac.yaml
+
+- name: Install helm
+  command: helm init --service-account tiller --history-max 200 --wait
+  register: helm_result
+  changed_when: '"Tiller is already installed in the cluster" not in helm_result.stdout'

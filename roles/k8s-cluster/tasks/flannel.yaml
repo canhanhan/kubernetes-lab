@@ -1,0 +1,8 @@
+---
+- name: Generate flannel config
+  template:
+    src: templates/kube-flannel.yaml.j2
+    dest: .ansible/kube-flannel.yaml
+
+- name: Apply flannel
+  command: kubectl apply -f .ansible/kube-flannel.yaml
